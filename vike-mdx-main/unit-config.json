@@ -1,0 +1,15 @@
+{
+    "listeners": {
+        "0.0.0.0:80": {
+            "pass": "routes"
+        }
+    },
+
+    "routes": [
+        {
+            "action": {
+                "share": "/usr/share/unit/webpage$uri"
+            }
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+import config from "./+config"
+export const meta = {
+    author:{
+      firstName: 'John',
+      lastName: 'Smith',
+      country: 'England'
+    },
+    title:config.title
+}
+
+# page {meta.title}
+
+{meta.author.firstName} was here from {meta.author.country}

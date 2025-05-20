@@ -1,0 +1,19 @@
+import { TypeAnimation } from 'react-type-animation';
+
+<>
+<h1>
+<TypeAnimation
+preRenderFirstString={true}
+  sequence={[
+    // Same substring at the start will only be typed once, initially
+    'Together, our members do custom software maintenance',
+    1000,
+    'Together, our members do custom software operations',    
+    1000,
+      ]}
+  speed={{type: 'keyStrokeDelayInMs', value: 150}}
+  repeat={Infinity}
+/>
+</h1>
+&nbsp;<button>Become a Member</button>
+</>
