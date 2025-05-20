@@ -1,8 +1,8 @@
-fastapi
+fastapi==0.110.2
 python-dotenv 
 pyjwt
 boto3
-mangum
+mangum==0.17.0
 requests
 pandas
 llama-index
@@ -14,7 +14,7 @@ streamlit
 aiofiles
 numpy
 matplotlib
-seaborn
+seaborn==0.12.2
 adjustText
 
 
