@@ -1,0 +1,14 @@
+[
+  {
+    "user_query": "Create a table of the influencers of the AURIGA trial discussion and list their number of tweets, total impressions, and other physicians that retweet their tweets. also create a column summarizing their sentiment.",
+    "timestamp": "2024-11-08T15:36:47.384885"
+  },
+  {
+    "user_query": "include the text as a column and hyperlink to the source",
+    "timestamp": "2024-11-08T15:40:32.755789"
+  },
+  {
+    "user_query": "Pie chart showing the number of tweets for Rahul Banerjee by trial. Include all trials that he\u2019s authored tweets on.",
+    "timestamp": "2024-11-22T23:27:51.465058"
+  }
+]
