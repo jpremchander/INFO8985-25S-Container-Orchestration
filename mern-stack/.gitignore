@@ -1,0 +1,77 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage / testing
+coverage
+*.lcov
+.nyc_output
+
+# Dependency directories
+node_modules/
+jspm_packages/
+web_modules/
+
+# Build/cache directories
+build/
+dist/
+.cache
+.next
+.out
+.nuxt
+.vuepress/dist
+.vitepress/dist
+.vitepress/cache
+.docusaurus
+.parcel-cache
+
+# Misc dev tools
+.eslintcache
+.stylelintcache
+.node_repl_history
+*.tgz
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Ignore both node_modules in server and frontend
+/server/node_modules
+/frontend/node_modules
+
+# Ignore .env files inside server and frontend (if placed there)
+/server/.env
+/server/.env.local
+/frontend/.env
+/frontend/.env.local
+
+# VSCode / IDE
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
