@@ -53,7 +53,8 @@ services:
     image: dpage/pgadmin4
     container_name: pgadmin4
     depends_on:
-      - postgres-db
+      postgres-db:
+        condition: service_healthy
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
@@ -66,6 +67,7 @@ services:
     &backend-api
     build:
       context: ./backend
+      dockerfile: Dockerfile
     environment:
       DB_HOST: mysql-db
       DB_USER: mernuser
@@ -79,24 +81,25 @@ services:
     depends_on:
       mysql-db:
         condition: service_healthy
-    ports:
-      - "3000:3000"   # expose host port for testing/debugging
+    expose:
+      - "3000"
 
   backend-api-1:
     <<: *backend-api
     container_name: backend-api-1
     ports:
-      - "3001:3000"   # unique port per replica
+      - "3001:3000"
 
   backend-api-2:
     <<: *backend-api
     container_name: backend-api-2
     ports:
-      - "3002:3000"   # unique port per replica
+      - "3002:3000"
 
   frontend-app:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
       target: build
     container_name: frontend-app
     depends_on:
@@ -124,3 +127,7 @@ volumes:
   mysql_data:
   pgdata:
   pgadmin_data:
+
+networks:
+  default:
+    name: app-network
