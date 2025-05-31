@@ -1,43 +1,52 @@
-// backend/seed.js
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 
-const connection = mysql.createConnection({
-  host: process.env.DB_HOST || 'mysql-db',
-  user: process.env.DB_USER || 'mernuser',
-  password: process.env.DB_PASSWORD || 'mernpassword',
-  database: process.env.DB_NAME || 'mernappdb',
-});
+async function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-const seedData = async () => {
-  const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS users (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      name VARCHAR(255),
-      email VARCHAR(255)
-    );
-  `;
+const ConnectDB = async () => {
+  let pool;
 
-  const insertDataQuery = `
-    INSERT INTO users (name, email)
-    SELECT * FROM (SELECT 'John Doe', 'john@example.com') AS tmp
-    WHERE NOT EXISTS (
-      SELECT email FROM users WHERE email = 'john@example.com'
-    ) LIMIT 1;
-  `;
-
-  connection.connect(err => {
-    if (err) throw err;
-    console.log('Connected to MySQL for seeding.');
-
-    connection.query(createTableQuery, err => {
-      if (err) throw err;
-      connection.query(insertDataQuery, err => {
-        if (err) throw err;
-        console.log('Seed data inserted!');
-        connection.end();
+  for (let i = 0; i < 10; i++) {  // Try max 10 times
+    try {
+      pool = mysql.createPool({
+        host: process.env.DB_HOST || "mysql-db",
+        user: process.env.DB_USER || "mernuser",
+        password: process.env.DB_PASSWORD || "mernpassword",
+        database: process.env.DB_DATABASE || "mernappdb",
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
       });
-    });
-  });
+      
+      // Test connection
+      await pool.query('SELECT 1');
+      
+      console.log('Connected to MySQL!');
+      break;  // Success, exit loop
+
+    } catch (err) {
+      console.log(`MySQL connection failed, retrying in 3 seconds... (${i + 1}/10)`);
+      await wait(3000);
+    }
+  }
+
+  if (!pool) {
+    throw new Error('Unable to connect to MySQL after multiple retries');
+  }
+
+  // Create table if not exists
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS \`${process.env.DB_TABLENAME}\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(50) NOT NULL,
+      email VARCHAR(100) NOT NULL UNIQUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
+
+  console.log(`Table '${process.env.DB_TABLENAME}' is ready.`);
+  return pool;
 };
 
-seedData();
+module.exports = ConnectDB;
