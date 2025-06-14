@@ -1,0 +1,85 @@
+name: Testing
+
+on:
+  workflow_dispatch
+  # push:
+  #   branches:
+  #     - master
+
+jobs:
+  trivy_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v3
+
+      - name: List files in the root directory
+        run: ls -a
+
+      - name: Install Trivy
+        run: |
+          wget https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.deb
+          sudo dpkg -i trivy_0.34.0_Linux-64bit.deb
+
+      - name: Start Docker Compose services
+        run: docker compose up -d
+
+      - name: Run Trivy scan
+        run: |
+          trivy image emp-backend:latest
+          trivy image nginx:latest
+
+  frontend_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v3
+
+      - name: List files in the root directory
+        run: ls -a
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Run ESLint
+        run: |
+          cd frontend
+          npm run lint
+          npm run lint:fix
+
+      - name: Run npm audit
+        run: |
+          cd frontend
+          npm audit
+          npm audit fix
+
+  backend_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v3
+
+      - name: List files in the root directory
+        run: ls -a
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm install
+
+      - name: Run jest tests
+        run: |
+          cd backend
+          npm test

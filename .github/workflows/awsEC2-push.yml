@@ -1,0 +1,79 @@
+name: AWS EC2 push
+
+on: 
+    workflow_dispatch:
+    # push:
+    #     branches:
+    #         - master
+
+jobs:
+    docker-push:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Get code
+              uses: actions/checkout@v3
+
+            - name: List All items in root
+              run: ls -a
+
+            - name: Set up SSH
+              uses: webfactory/ssh-agent@v0.5.3
+              with:
+                  ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+            - name: Create emp folder on EC2
+              run: |
+                ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+                sudo mkdir -p /home/emp
+                sudo chown $USER:$USER /home/emp
+                EOF
+                
+            - name: Clone Repository on EC2
+              run: |
+                ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+                sudo apt install -y git
+                cd /home/emp
+                git init
+                git clone https://github.com/abhixsh/employee-mgmt-dockerized
+                git pull origin main
+                ls -a
+                EOF
+
+
+            - name: Create env file and check files in EC2
+              run: |
+                ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+                  echo 'MONGODB_URI=${{ secrets.MONGODB_URI }}' > /home/emp/employee-mgmt-dockerized/backend/.env
+                  ls -a /home/emp/employee-mgmt-dockerized/backend
+                EOF
+
+            - name: Install Docker and Docker Compose on EC2
+              run: |
+                ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+                  sudo apt update
+                  sudo apt install -y docker.io
+                  sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                  sudo chmod +x /usr/local/bin/docker-compose
+                  sudo systemctl start docker
+                  sudo systemctl enable docker
+                  sudo usermod -aG docker $USER
+                EOF
+
+            - name: Build frontend
+              run: |
+                ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+                  sudo chown -R $USER:$USER /home/emp/employee-mgmt-dockerized/frontend/build
+                  sudo chmod -R 755 /home/emp/employee-mgmt-dockerized/frontend/build
+                  sudo apt install -y nodejs npm
+                  cd /home/emp/employee-mgmt-dockerized/frontend
+                  npm install
+                  npm run build
+                EOF
+
+            - name: Run docker compose in the root directory
+              run: |
+                ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+                  cd /home/emp/employee-mgmt-dockerized
+                  sudo docker-compose build
+                  sudo docker-compose up -d
+                EOF
