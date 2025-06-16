@@ -36,6 +36,8 @@ You can try the live version of this project by visiting the following link: [te
 
 ## Project Structure
 
+![image](https://github.com/user-attachments/assets/57c692ef-47c1-4df5-b5d2-dd65a4c580b9)
+
 .
 ├── backend/
 │   ├── Dockerfile
