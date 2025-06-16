@@ -1,5 +1,9 @@
 # Employee Management System 
 
+# Assignment 2 - Advanced Containers 
+
+Author: Prem Chander Jebastian
+
 ## Project Overview
 The Employee Management System is a web application that uses the MERN stack (MongoDB, Express, React, Node.js) to manage employee data. It enables administrators to perform CRUD operations (Create, Read, Update, Delete) and features a React-powered responsive interface. The project is containerized using Docker for consistent deployment and integrated with GitHub Actions for automation.
 
