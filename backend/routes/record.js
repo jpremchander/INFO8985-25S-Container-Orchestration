@@ -1,23 +1,13 @@
 import express from "express";
-
-import dbPromise from "../db/connection.js";
-
 import { ObjectId } from "mongodb";
 
 const router = express.Router();
 
-let db;
-
-dbPromise.then(database => {
-  db = database;
-}).catch(err => {
-  console.error("Failed to connect to the database:", err);
-});
-
+// Get all records
 router.get("/", async (req, res) => {
   try {
-    let collection = await db.collection("records");
-    let results = await collection.find({}).toArray();
+    const collection = req.db.collection("records");
+    const results = await collection.find({}).toArray();
     res.status(200).json(results);
   } catch (err) {
     console.error(err);
@@ -25,11 +15,12 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get one record by ID
 router.get("/:id", async (req, res) => {
   try {
-    let collection = await db.collection("records");
-    let query = { _id: new ObjectId(req.params.id) };
-    let result = await collection.findOne(query);
+    const collection = req.db.collection("records");
+    const query = { _id: new ObjectId(req.params.id) };
+    const result = await collection.findOne(query);
 
     if (!result) {
       return res.status(404).send("Record not found");
@@ -41,18 +32,16 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// Create new records (single or multiple)
 router.post("/", async (req, res) => {
   try {
     let newDocuments = req.body;
-
     if (!Array.isArray(newDocuments)) {
       newDocuments = [newDocuments];
     }
 
-    let collection = await db.collection("records");
-
-    let result = await collection.insertMany(newDocuments);
-
+    const collection = req.db.collection("records");
+    const result = await collection.insertMany(newDocuments);
     res.status(201).json(result);
   } catch (err) {
     console.error(err);
@@ -60,6 +49,7 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Update a record by ID
 router.patch("/:id", async (req, res) => {
   try {
     const query = { _id: new ObjectId(req.params.id) };
@@ -71,8 +61,8 @@ router.patch("/:id", async (req, res) => {
       },
     };
 
-    let collection = await db.collection("records");
-    let result = await collection.updateOne(query, updates);
+    const collection = req.db.collection("records");
+    const result = await collection.updateOne(query, updates);
 
     if (result.matchedCount === 0) {
       return res.status(404).send("Record not found");
@@ -85,12 +75,12 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
+// Delete a record by ID
 router.delete("/:id", async (req, res) => {
   try {
     const query = { _id: new ObjectId(req.params.id) };
-
-    const collection = await db.collection("records");
-    let result = await collection.deleteOne(query);
+    const collection = req.db.collection("records");
+    const result = await collection.deleteOne(query);
 
     if (result.deletedCount === 0) {
       return res.status(404).send("Record not found");

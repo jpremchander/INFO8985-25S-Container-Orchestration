@@ -11,7 +11,7 @@ The Employee Management System is a web application that uses the MERN stack (Mo
 - **Responsive UI:** Built using React for a dynamic user interface.
 
 ## Live Demo
-You can try the live version of this project by visiting the following link: [Live Demo](#)
+You can try the live version of this project by visiting the following link: [text](https://been-preceding-ended-virtual.trycloudflare.com)
 
 
 ## Technologies Used
@@ -25,10 +25,25 @@ You can try the live version of this project by visiting the following link: [Li
 - **AWS:** For cloud deployment and container management.
 
 ## Project Images
-![Landing Page](img/landing.png)
-![Senior Section](img/image-1.png)
-![Add Emp](img/image-2.png)
-![Add Emp](img/image-3.png)
+![Landing Page] ![alt text](image.png)
+![Senior Section] ![alt text](image-1.png)
+![Add Emp] ![alt text](image-2.png)
+![Add Emp] ![alt text](image-3.png)
+
+## Project Structure
+
+.
+├── backend/
+│   ├── Dockerfile
+│   ├── server.js
+│   ├── db/
+│   ├── routes/
+│   └── .env
+├── frontend/
+│   ├── Dockerfile
+│   └── dist/
+├── docker-compose.yml
+└── README.md
 
 ## Setup Guide
 
@@ -38,7 +53,7 @@ Clone the repository:
 Open your terminal (or Git Bash if you're on Windows) and navigate to the directory where you want to store your project. Then, run the following command to clone your repository:
 
 ```bash
-git clone https://github.com/your-username/employee-mgmt-dockerized.git
+git clone (https://github.com/jpremchander/INFO8985-25S-Container-Orchestration)
 ```
 Replace `your-username` with your GitHub username and `employee-mgmt-dockerized` with the name of your repository.
 
@@ -116,418 +131,173 @@ If you're using npm, run:
 npm run dev
 ```
 
-This will start the frontend server, which by default will run on port 3000.
+This will start the frontend server, which by default will run on port 80.
 
-Verify: The frontend should now be accessible at [http://localhost:3000](http://localhost:3000).
+Verify: The frontend should now be accessible at [http://localhost:80](http://localhost:80).
 
 ### Step 6: Dockerize the Backend (Only Backend)
 To Dockerize the backend, you'll create a Dockerfile in your backend directory.
 
-#### Step-by-Step:
-1. Navigate to your backend folder.
-2. Create a Dockerfile in the backend directory:
+## Docker Setup
 
-```dockerfile
-FROM node:16
+## Backend Dockerfile
 
-WORKDIR /app
+Uses a multi-stage build:
 
-COPY package*.json ./
+Stage 1: Uses node:18-alpine to install dependencies and build the backend.
 
-RUN npm install
+Stage 2: Copies build artifacts to a lightweight node:18-alpine image.
 
-COPY . .
+Runs the backend server on port 5050.
 
-EXPOSE 5050
+Runs as a non-root user to enhance security.
 
-CMD ["node", "server.js"]
-```
+Environment variables are injected for configuration and secrets.
 
-3. Build the Docker image:
-Run the following command in the terminal (from the backend directory):
+## Frontend Dockerfile
 
-```bash
-docker build -t my-backend .
-```
+Uses multi-stage build:
 
-4. Run the Docker container:
-After building the image, run the backend container:
+## Stage 1: Uses node:18-alpine to build the React frontend.
 
-```bash
-docker run -p 5050:5050 my-backend
-```
+## Stage 2: Uses nginx:alpine to serve the static frontend files.
 
-This will run your backend on port 5050.
+The built React files are copied into the NGINX default serving directory /usr/share/nginx/html.
 
-### Step 7: Multi-stage Build for Backend
-A multi-stage build allows you to create smaller images by having multiple stages in your Dockerfile.
+## NGINX configuration
 
-#### Step-by-Step:
-1. Modify your Dockerfile to use multi-stage builds:
+Serve static content.
 
-```dockerfile
-# Stage 1: Build
-FROM node:18-alpine AS build
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
+Reverse proxy API calls to the backend server.
 
-# Stage 2: Production
-FROM node:18-alpine
-WORKDIR /app
-COPY --from=build /app /app
-ENV NODE_ENV=production
-EXPOSE 5050
-CMD ["node", "server.js"]
-```
+Enable gzip compression and caching for better performance.
 
-2. Build the Docker image with multi-stage:
+Exposes port 80 for HTTP access.
 
-```bash
-docker build -t my-backend-multistage .
-```
+## MongoDB Container
 
-3. Run the container:
+Uses official mongo:latest image.
 
-```bash
-docker run -p 5050:5050 my-backend-multistage
-```
+Configured with a secure user and password.
 
-### Step 8: Push Image to Docker Hub (Only Backend)
-To push the image to Docker Hub, follow these steps:
+Uses Docker volumes to persist data on the host filesystem, ensuring data survives container restarts.
 
-1. Log in to Docker Hub in your terminal:
+MongoDB listens on default port 27017 internally (not exposed publicly).
 
-```bash
-docker login
-```
+## Docker Compose Configuration
 
-2. Tag your image for Docker Hub:
-Assuming your Docker Hub username is `username` and the image name is `my-backend`:
+Defines three services: backend, frontend, and mongo.
 
-```bash
-docker tag my-backend username/my-backend:latest
-```
+Creates a dedicated Docker network for isolated communication between services.
 
-3. Push the image:
-Push the tagged image to Docker Hub:
+## Configures volumes:
 
-```bash
-docker push username/my-backend:latest
-```
+mongo-data volume for MongoDB persistent storage.
 
-### Step 9: Pull the NGINX Image from Docker Hub
-To serve the React app, pull the latest official NGINX image from Docker Hub:
+Optional log volume for backend logs.
 
-```bash
-docker pull nginx:latest
-```
+## Maps ports:
 
-### Step 10: Build the React Frontend (if not already built)
-If you haven't already built the React app, navigate to the frontend directory and build the React app:
+Frontend accessible at localhost:80.
 
-```bash
-cd path/to/your/frontend
-npm run build
-```
+Backend accessible at localhost:5050 (if needed for direct API testing).
 
-This will create a `build/` directory in your frontend project that contains all the static files.
+Passes environment variables securely to services, including MongoDB credentials and app configs.
 
-### Step 11: Volume Map React Build Files to NGINX
-Now, we’ll run the NGINX container and map the volume to serve the React app's static files.
+NGINX in frontend service proxies /api requests to backend service for API calls.
 
-Run the NGINX container and map volumes:
+## NGINX Configuration Details
 
-```bash
-docker run -d -p 3002:80 \
-    -v ./employee-mgmt-dockerized/frontend/public/build:/usr/share/nginx/html \
-    -v ./employee-mgmt-dockerized/frontend/nginx/nginx.conf:/etc/nginx/nginx.conf \
-    nginx
-```
+Located in the frontend Docker context (nginx.conf).
 
-Verify that the NGINX container is running by visiting [http://localhost](http://localhost) in your browser. Your React app should now be served by NGINX.
+Serves static React frontend assets.
 
-### Step 12: Optional - Run Both Backend and Frontend with Docker Compose
-If you want to run both the backend (Node.js) and frontend (NGINX) using Docker Compose, you can create a `docker-compose.yml` file to manage both services.
+Proxies API requests to backend to avoid CORS issues.
 
-Create a `docker-compose.yml` file in your project root directory with the following content:
+Listens on port 80.
 
-```yaml
-version: '3'
+Uses Alpine-based NGINX image for minimal image size.
 
-services:
-    backend:
-        image: emp-backend
-        build: ./backend
-        ports:
-            - "5050:5050"
+Caching and compression enabled for optimized delivery.
 
-    frontend:
-        image: nginx
-        volumes:
-            - ./frontend/build:/usr/share/nginx/html
-            - ./frontend/nginx/nginx.conf:/etc/nginx/nginx.conf
-        ports:
-            - "3000:80"
-```
+## API Endpoints
 
-#### Step-by-Step:
-1. Navigate to the project’s root directory.
-2. Run the Docker Compose services:
+The backend API exposes:
 
-```bash
+Method	Endpoint	  Description
+POST	/user	    Create a new user entry
+GET	    /user/{id}	Retrieve a user by ID
+
+Requests and responses are logged in a file inside the backend container for traceability.
+
+## Security Considerations
+
+* MongoDB user created with limited privileges scoped only to the application database.
+
+* Environment variables used for sensitive data instead of hardcoding credentials.
+
+* Backend and frontend containers run as non-root users.
+
+* Docker networks isolate containers and prevent unnecessary exposure.
+
+* NGINX acts as a reverse proxy, preventing direct access to backend from outside except via allowed routes.
+
+## Data Persistence
+
+* MongoDB data persists using Docker named volumes (mongo-data).
+
+* Volume ensures user data is safe even if MongoDB container restarts or is recreated.
+
+* Backend logs can optionally be persisted via volumes for audit purposes.
+
+## Testing the API with Postman
+
+* Set the base URL to http://localhost:5050.
+
+* Create User (POST /user):
+
+* Headers: Content-Type: application/json
+
+Body:
+
+{
+  "firstName": "Leon",
+  "lastName": "Jebastian"
+}
+Get User by ID (GET /user/{id}):
+
+Replace {id} with actual user ID returned by POST.
+
+Responses return JSON objects with user data or status messages.
+
+You can verify logs inside the backend container to confirm requests.
+
+## Running the Application
+
+To start the entire application stack locally:
+
 docker-compose up --build
-```
+Frontend accessible at http://localhost
 
-This will start both the backend and the frontend in their respective containers. Your backend will be available at [http://localhost:5050](http://localhost:5050), and your frontend will be available at [http://localhost:3000](http://localhost:3000).
+Backend API accessible at http://localhost:5050 (optional direct access)
 
-### Step 13: Setup GitHub Action to Push Images to Docker Hub
+MongoDB runs in the background with persistent data storage.
 
-To automate pushing Docker images of the backend and frontend to Docker Hub upon a push event in your GitHub repository, use the following GitHub Actions workflow. This ensures consistent builds and deployments from your repository.
+## Exposing via Cloudflare Tunnel
 
-#### GitHub Actions Workflow: `backend-docker-push.yml`
+To expose the frontend app publicly without a domain:
 
-Create a GitHub Actions workflow file in `.github/workflows/backend-docker-push.yml`:
 
-```yaml
-name: Backend and Frontend Docker Push
+cloudflared tunnel --url http://localhost:80
 
-on: push
+This generates a public HTTPS URL tunneled securely to your local machine.
 
-jobs:
-    test-backend:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout repository
-                uses: actions/checkout@v3
-            
-            - name: Install backend dependencies
-                run: |
-                    cd backend
-                    npm install
+# Summary of Files
+File	                           Purpose
+backend/Dockerfile	          Multi-stage build for backend API server
+frontend/Dockerfile	          Multi-stage build for React + NGINX
+frontend/nginx.conf	          NGINX config for serving frontend & proxy
+docker-compose.yml	          Orchestrates backend, frontend, mongo containers
+.env	                      Environment variables for app & database
+README.md	                  Project Documentation
 
-    test-frontend:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout repository
-                uses: actions/checkout@v3
-
-            - name: Install frontend dependencies
-                run: |
-                    cd frontend
-                    npm install
-
-    docker-push:
-        needs: 
-            - test-backend 
-            - test-frontend
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout repository
-                uses: actions/checkout@v3
-
-            - name: Build Docker images
-                run: |
-                    docker-compose build
-
-            - name: Log in to Docker Hub
-                run: |
-                    echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-            - name: Push Backend Image to Docker Hub
-                run: |
-                    docker tag emp-backend ${{ secrets.DOCKER_USERNAME }}/emp-backend:latest
-                    docker push ${{ secrets.DOCKER_USERNAME }}/emp-backend:latest
-
-            - name: Push Frontend Image to Docker Hub
-                run: |
-                    docker tag nginx ${{ secrets.DOCKER_USERNAME }}/emp-frontend:latest
-                    docker push ${{ secrets.DOCKER_USERNAME }}/emp-frontend:latest
-```
-
-#### Steps Explained:
-
-- **Trigger:** This workflow is triggered on any push to the main branch. Adjust the branch name as needed.
-- **Test Backend:** Installs and verifies the backend dependencies. [Optional]
-- **Test Frontend:** Installs and verifies the frontend dependencies. [Optional]
-- **Docker Build and Push:** After successfully testing, Docker images are built using `docker-compose` and pushed to Docker Hub using your saved credentials.
-
-#### Setting Up Secrets:
-
-To store your Docker Hub credentials securely in the GitHub repository:
-
-1. Go to your repository's **Settings > Secrets and variables > Actions**.
-2. Add the following secrets:
-     - `DOCKER_USERNAME`: Your Docker Hub username.
-     - `DOCKER_PASSWORD`: Your Docker Hub password or access token.
-
-#### Verifying Workflow:
-
-1. Commit and push the `backend-docker-push.yml` file to your repository.
-2. Check the **Actions** tab in your GitHub repository to monitor the workflow's execution.
-3. Once complete, the backend and frontend Docker images will be available on Docker Hub under your account, tagged as `latest`.
-
-### Step 14: GitHub Action to Push Docker Images to ECR
-
-This workflow pushes the backend Docker image to Amazon ECR.
-
-### GitHub Actions Workflow: `backend-docker-push-to-ecr.yml`
-
-```yaml
-name: Push Backend Docker Image to ECR
-
-on:
-    push:
-        branches:
-            - main  # Adjust the branch name if needed
-
-jobs:
-    build-and-push:
-        runs-on: ubuntu-latest
-
-        steps:
-            - name: Checkout repository
-                uses: actions/checkout@v3
-
-            - name: Set up Docker Buildx
-                uses: docker/setup-buildx-action@v2
-                # Allows for advanced Docker Build features
-
-            - name: Login to AWS ECR
-                run: |
-                    aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-                    aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                    aws configure set default.region ${{ secrets.AWS_DEFAULT_REGION }}
-                    aws ecr get-login-password --region ${{ secrets.AWS_DEFAULT_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com
-                # Logs into AWS ECR using AWS credentials stored in GitHub Secrets
-
-            - name: Build Docker Image
-                run: |
-                    docker-compose build backend
-                # Builds the Docker image for the backend from docker-compose.
-
-            - name: Tag Docker Image
-                run: |
-                    docker tag backend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/emp-backend:latest
-                # Tags the built backend Docker image.
-
-            - name: Push Backend Image to ECR
-                run: |
-                    docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/emp-backend:latest
-                # Pushes the backend Docker image to ECR.
-```
-
-### Explanation:
-
-- This workflow is triggered on a push to the main branch.
-- It logs into AWS using credentials stored in GitHub Secrets (AWS Access Key, Secret Key, AWS Region, and Account ID).
-- It builds the backend Docker image and pushes it to an ECR repository (emp-backend).
-
-### Setting up AWS Secrets:
-
-Go to your repository’s **Settings > Secrets and variables > Actions** and add:
-
-- `AWS_ACCESS_KEY_ID`: Your AWS access key.
-- `AWS_SECRET_ACCESS_KEY`: Your AWS secret key.
-- `AWS_ACCOUNT_ID`: Your AWS account ID.
-- `AWS_DEFAULT_REGION`: The AWS region (e.g., us-west-2).
-
-### Step 15: GitHub Action for Dockerfile Vulnerability Scanning with Trivy
-
-This workflow scans your Dockerfiles for security vulnerabilities using Trivy.
-
-### GitHub Actions Workflow: `docker-vulnerability-scan.yml`
-
-```yaml
-name: Scan Docker Images for Vulnerabilities
-
-on:
-    push:
-        branches:
-            - main  # Adjust the branch name if needed
-
-jobs:
-    vulnerability-scan:
-        runs-on: ubuntu-latest
-
-        steps:
-            - name: Checkout repository
-                uses: actions/checkout@v3
-
-            - name: Install Trivy
-                run: |
-                    sudo apt-get update
-                    sudo apt-get install -y wget
-                    wget https://github.com/aquasecurity/trivy/releases/download/v0.29.2/trivy_0.29.2_Linux-64bit.deb
-                    sudo dpkg -i trivy_0.29.2_Linux-64bit.deb
-                # Installs Trivy on the runner
-
-            - name: Scan Dockerfile for Vulnerabilities
-                run: |
-                    trivy fs --severity HIGH,CRITICAL --exit-code 1 --no-progress .
-                # Scans the repository's Dockerfiles for vulnerabilities. It exits with a non-zero code if high/critical vulnerabilities are found.
-```
-![alt text](img/image.png)
-### Explanation:
-
-- The workflow scans the Dockerfiles for vulnerabilities using Trivy.
-- If any critical or high vulnerabilities are found, it will fail the pipeline (exit-code 1).
-
-### Step 16: GitHub Action to Deploy Backend and Frontend to EC2
-
-This workflow deploys your backend and frontend Docker containers to an EC2 instance using SSH.
-
-### GitHub Actions Workflow: `deploy-to-ec2.yml`
-
-```yaml
-name: Deploy to EC2
-
-on:
-    push:
-        branches:
-            - main  # Trigger on push to main
-
-jobs:
-    deploy:
-        runs-on: ubuntu-latest
-
-        steps:
-            - name: Checkout repository
-                uses: actions/checkout@v3
-
-            - name: Set up SSH for EC2
-                uses: webfactory/ssh-agent@v0.5.3
-                with:
-                    ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-                # Configures SSH to communicate with EC2 using the private key stored in GitHub secrets.
-
-            - name: Copy Backend Docker Image to EC2
-                run: |
-                    ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
-                        docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/emp-backend:latest
-                        docker-compose -f /path/to/your/backend/docker-compose.yml up -d
-                    EOF
-                # Pulls the latest Docker image from ECR and deploys the backend to EC2 using `docker-compose`.
-
-            - name: Copy Frontend Docker Image to EC2
-                run: |
-                    ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
-                        docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/emp-frontend:latest
-                        docker-compose -f /path/to/your/frontend/docker-compose.yml up -d
-                    EOF
-                # Pulls the latest Docker image for the frontend and deploys it to EC2.
-```
-![alt text](img/ip.png)
-![alt text](img/ec2.png)
-### Explanation:
-
-- This workflow uses SSH to connect to your EC2 instance and deploys the backend and frontend Docker images pulled from ECR.
-- It assumes the `docker-compose.yml` file is present on the EC2 instance, which defines how to run the containers for both backend and frontend.
-
-### Setting up EC2 SSH Secrets:
-
-In your repository's **Settings > Secrets and variables > Actions**, add the following secrets:
-
-- `EC2_SSH_PRIVATE_KEY`: Your private SSH key to access the EC2 instance.
-- `EC2_PUBLIC_IP`: The public IP address of your EC2 instance.
